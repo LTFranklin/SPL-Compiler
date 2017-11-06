@@ -1,0 +1,82 @@
+<character> 			::= a|b|C|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z
+
+<digit> 				::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+
+<sign> 					::= + | -
+
+<integer> 				::= <digit> | <digit> <integer>
+
+<signedInt> 			::= <sign> <integer>
+
+<real> 					::= <int> "." <int>
+
+
+
+<program> 				::= <identifier> ":" <block> "ENDP" <identifier> "."
+
+<block> 				::= "DECLARATIONS" <declaration_block> "CODE" <statement_list>
+						| "CODE" <statement_list>
+
+<declaration_block> 	::= <identifier> "," <declaration_block>
+						| <identifier> "OF TYPE" <type> ";" <declaration_block>
+						| <identifier> "OF TYPE" <type> ";"
+
+<type> 					::= CHARACTER | INTEGER | REAL
+
+<statement_list> 		::= <statement> ";" <statement_list>
+						| <statement>
+
+<statement> 			::= <assignment_statement> | <if_statement> | <do_statement> | <while_statement> | <for_statement> | <write_statement> | <read_statement>
+
+<assignment_statement> 	::= <expression> "->" <identifier>
+
+<if_statement> 			::= "IF" <conditional> "THEN" <statement_list> "ENDIF"
+						| "IF" <conditional> "THEN" <statement_list> "ELSE" <statement_list> "ENDIF"
+
+<while_statement> 		::= "WHILE" <conditional> "DO" <statement_list> "ENDWHILE"
+
+<do_statement> 		::= "DO" <statement_list> "WHILE" <conditional> "ENDDO"
+
+<for_statement> 		::= "FOR" <identifier> "IS" <expression> "BY" <expression> "TO" <expression> "DO" <statement_list> "ENDFOR"
+
+<write_statement> 		::= "WRITE (" <output_list> ")"
+						| "NEWLINE"
+
+<read_statement> 		::= "READ (" <identifier> ")"
+
+<output_list> 			::= <value> "," <output_list>
+						| <value>
+
+<conditional> 			::= "NOT" <conditional>
+						| <expression> <comparator> <expression> "AND" <conditional>
+						| <expression> <comparator> <expression> "OR" <conditional>
+						| <expression> <comparator> <expression>
+
+<comparator> 			::= "=" | "<>" | "<" | ">" | "<=" | ">="
+
+<expression> 			::= <term> "+"
+						| <term> "-"
+						| <term>
+
+<term> 					::= <value> "*" <term>
+						| <value> "/" <term>
+						| <value>
+
+<value> 				::= <identifier>
+						| <constant>
+						| "(" <expression> ")"
+
+<constant> 				::= <character_constant>
+						| <number_constant>
+
+<character_constant> 	::= "'" <character> "'"
+
+<number_constant> 		::= <signedInt> "." <integer>
+						| <integer> "." <integer>
+						| <signedInt>
+						| <integer>
+
+<identifier> 			::= <character>
+						| <character> <digit>
+						| <character> <identifier>
+						| <character> <digit> <identifier>
