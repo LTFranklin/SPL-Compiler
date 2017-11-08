@@ -6,11 +6,17 @@ int yylex(void);
 void yyerror(char *);
 
 #define NOTHING -1
+#define SYMTABSIZE     50
+#define IDLENGTH       15
+#define NOTHING        -1
+#define INDENTOFFSET    2
 
 enum ParseTreeNodeType
-{
-	PROGRAM,BLOCK,DECLARATION_BLOCK,VAR_TYPE,STATEMENT_LIST,STATEMENT,ASSIGNMENT_STATEMENT,IF_STATEMENT,WHILE_STATEMENT,DO_STATEMENT,FOR_STATEMENT,WRITE_STATEMENT,READ_STATEMENT,OUTPUT_LIST,CONDITIONAL,COMPARATOR,EXPRESSION,TERM,VALUE,CONSTANT,VARIABLE
+{	PROGRAM,BLOCK,DECLARATION_BLOCK,VAR_TYPE,STATEMENT_LIST,STATEMENT,ASSIGNMENT_STATEMENT,IF_STATEMENT,WHILE_STATEMENT,DO_STATEMENT,FOR_STATEMENT,WRITE_STATEMENT,READ_STATEMENT,OUTPUT_LIST,CONDITIONAL,COMPARATOR,EXPRESSION,TERM,VALUE,CONSTANT,VARIABLE
 };
+
+
+
 
 /*Define a tree node as an item, variable and 3 other tree nodes */
 struct treeNode
@@ -26,6 +32,18 @@ typedef struct treeNode TREE_NODE;
 typedef TREE_NODE *TERNARY_TREE;
 TERNARY_TREE create_node(int,int,TERNARY_TREE,TERNARY_TREE,TERNARY_TREE);
 void print_tree(TERNARY_TREE);
+
+struct symTabNode {
+    char identifier[IDLENGTH];
+};
+
+typedef  struct symTabNode SYMTABNODE;
+typedef  SYMTABNODE        *SYMTABNODEPTR;
+
+SYMTABNODEPTR  symTab[SYMTABSIZE]; 
+
+int currentSymTabSize = 0;
+
 %}
 
 %union
@@ -34,11 +52,10 @@ void print_tree(TERNARY_TREE);
 	TERNARY_TREE tVal;
 }
 
-%token<iVal>				IDENTIFIER
 
 %type<tVal>				program block declaration_block type statement_list statement assignment_statement if_statement while_statement do_statement for_statement write_statement read_statement output_list conditional comparator expression term value constant variable
 
-%token					FULL_STOP ENDP DECLARATIONS CODE COMMA OF TYPE SEMI_COLON CHARACTER INTEGER REAL ASSIGNMENT IF THEN ELSE ENDIF WHILE DO ENDWHILE FOR IS BY TO ENDFOR WRITE OPEN CLOSE NEWLINE READ NOT AND OR EQUAL_TO NOT_EQUAL_TO LESS_THAN GREATER_THAN LESS_THAN_OR_EQUAL_TO GREATER_THAN_OR_EQUAL_TO PLUS MINUS MULTIPLY DIVIDE QUOTE NUMBER_CONSTANT CHARACTER_CONSTANT COLON ENDDO
+%token					IDENTIFIER FULL_STOP ENDP DECLARATIONS CODE COMMA OF TYPE SEMI_COLON CHARACTER INTEGER REAL ASSIGNMENT IF THEN ELSE ENDIF WHILE DO ENDWHILE FOR IS BY TO ENDFOR WRITE OPEN CLOSE NEWLINE READ NOT AND OR EQUAL_TO NOT_EQUAL_TO LESS_THAN GREATER_THAN LESS_THAN_OR_EQUAL_TO GREATER_THAN_OR_EQUAL_TO PLUS MINUS MULTIPLY DIVIDE QUOTE NUMBER_CONSTANT CHARACTER_CONSTANT COLON ENDDO
 %%
 
 program			 		: variable COLON block ENDP variable FULL_STOP
@@ -291,13 +308,16 @@ TERNARY_TREE create_node(int ival, int case_identifier, TERNARY_TREE p1, TERNARY
 
 void print_tree(TERNARY_TREE t)
 {
+	if(t == NULL)
+	{
+		return;
+	}
 	printf("Item: %d", t -> item);
 	printf(" nodeIdentifier: %d\n", t -> nodeIdentifier);
 	print_tree(t -> first);
 	print_tree(t -> second);
 	print_tree(t -> third);	
 }
-
 
 
 #include "lex.yy.c"

@@ -4,6 +4,15 @@
 #else
 #define	RETURN(type,token) return(token)
 #endif
+
+
+
+/* Declare Symbol Table Type and Array as imported types */
+
+#include <string.h>
+extern SYMTABNODEPTR symTab[SYMTABSIZE];
+extern int currentSymTabSize;
+int installId(char *);
 %}
 
 delim					[ \t\n]
@@ -84,13 +93,81 @@ OR						RETURN(keyword, OR);
 
 "'"						RETURN(quote, QUOTE); 
 
-{identifier}			RETURN(identifier, IDENTIFIER);
+{identifier}			{
+							yylval.iVal = installId(yytext);
+							RETURN(identifier, IDENTIFIER);
+						}
 
-{character_constant}	RETURN(character_constant, CHARACTER_CONSTANT);
-
+{character_constant}	{
+							yylval.iVal = installId(yytext);
+							RETURN(character_constant, CHARACTER_CONSTANT);
+						}
+						
 {number_constant}		{
 							k = atoi(yytext);
 							RETURN(number_constant, NUMBER_CONSTANT);
 						};
+
+%%						
+
+/* Here is the code for the library of symbol table routines */
+
+/* code for a simple symbol table, which is an array of pointers to
+   structs, each of which contains an identifier.
+*/
+
+
+SYMTABNODEPTR newSymTabNode()
+{
+    return ((SYMTABNODEPTR)malloc(sizeof(SYMTABNODE)));
+}
+
+int lookup(char *s)
+{
+    extern SYMTABNODEPTR symTab[SYMTABSIZE];
+    extern int currentSymTabSize;
+    int i;
+
+    for(i=0; i<currentSymTabSize; i++)
+    {
+        if(strncmp(s,symTab[i]->identifier,IDLENGTH) == 0)
+        {
+            return (i);
+        }
+    }
+    return (-1);    
+}
+
+/* Look up an identifier in the symbol table, if its there return
+   its index.  If its not there, put it in the end position,
+   as long as the table isn't full, and return its index.
+*/
+
+int installId(char *id) 
+{
+    extern SYMTABNODEPTR symTab[SYMTABSIZE]; 
+    extern int currentSymTabSize;
+    int index;
+
+    index = lookup(id);
+    if (index >= 0)
+    {
+        return (index);
+    }
+    else 
+       if (currentSymTabSize >= SYMTABSIZE) 
+          /* SYMTAB is full */
+          return (NOTHING) ;
+    else
+    {
+       symTab[currentSymTabSize] = newSymTabNode();
+       /* Recommended code for preventing buffer overrun on bounded strings */
+       strncpy(symTab[currentSymTabSize]->identifier,id,IDLENGTH);
+       symTab[currentSymTabSize]->identifier[IDLENGTH-1] = '\0';
+       return(currentSymTabSize++);
+    }
+}
+
+
 
 
