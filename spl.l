@@ -110,9 +110,8 @@ OR						RETURN(keyword, OR);
 
 %%						
 
-/* Here is the code for the library of symbol table routines */
-
-/* code for a simple symbol table, which is an array of pointers to
+/* Here is the code for the library of symbol table routines 
+ code for a simple symbol table, which is an array of pointers to
    structs, each of which contains an identifier.
 */
 

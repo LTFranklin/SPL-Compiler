@@ -12,7 +12,8 @@ void yyerror(char *);
 #define INDENTOFFSET    2
 
 enum ParseTreeNodeType
-{	PROGRAM,BLOCK,DECLARATION_BLOCK,VAR_TYPE,STATEMENT_LIST,STATEMENT,ASSIGNMENT_STATEMENT,IF_STATEMENT,WHILE_STATEMENT,DO_STATEMENT,FOR_STATEMENT,WRITE_STATEMENT,READ_STATEMENT,OUTPUT_LIST,CONDITIONAL,COMPARATOR,EXPRESSION,TERM,VALUE,CONSTANT,VARIABLE
+{
+	PROGRAM,BLOCK,DECLARATION_BLOCK,VAR_TYPE,STATEMENT_LIST,STATEMENT,ASSIGNMENT_STATEMENT,IF_STATEMENT,WHILE_STATEMENT,DO_STATEMENT,FOR_STATEMENT,WRITE_STATEMENT,READ_STATEMENT,OUTPUT_LIST,CONDITIONAL,COMPARATOR,EXPRESSION,TERM,VALUE,CONSTANT,VARIABLE
 };
 
 
@@ -52,6 +53,8 @@ int currentSymTabSize = 0;
 	TERNARY_TREE tVal;
 }
 
+
+%type<iVal> CHARACTER_CONSTANT NUMBER_CONSTANT IDENTIFIER
 
 %type<tVal>				program block declaration_block type statement_list statement assignment_statement if_statement while_statement do_statement for_statement write_statement read_statement output_list conditional comparator expression term value constant variable
 
@@ -273,21 +276,21 @@ value			 		: variable
 					;
 constant			 	: CHARACTER_CONSTANT
 					{
-						$$ = create_node(NOTHING,CONSTANT,NULL,NULL,NULL);
+						$$ = create_node($1,CONSTANT,NULL,NULL,NULL);
 					}
 					| MINUS NUMBER_CONSTANT
 					 	{
-							$$ = create_node(NOTHING,CONSTANT,NULL,NULL,NULL);
+							$$ = create_node($2,CONSTANT,NULL,NULL,NULL);
 						}
 					| NUMBER_CONSTANT
 					 	{
-							$$ = create_node(NOTHING,CONSTANT,NULL,NULL,NULL);
+							$$ = create_node($1,CONSTANT,NULL,NULL,NULL);
 						}
 					;
 
 variable				: IDENTIFIER
  						{
-							$$ = create_node(NOTHING,VARIABLE,NULL,NULL,NULL);
+							$$ = create_node($1,VARIABLE,NULL,NULL,NULL);
 						}
 					;
 
@@ -308,12 +311,13 @@ TERNARY_TREE create_node(int ival, int case_identifier, TERNARY_TREE p1, TERNARY
 
 void print_tree(TERNARY_TREE t)
 {
+	char arr[25][40] = {"PROGRAM","BLOCK","DECLARATION_BLOCK","VAR_TYPE","STATEMENT_LIST","STATEMENT","ASSIGNMENT_STATEMENT","IF_STATEMENT","WHILE_STATEMENT","DO_STATEMENT","FOR_STATEMENT","WRITE_STATEMENT","READ_STATEMENT","OUTPUT_LIST","CONDITIONAL","COMPARATOR","EXPRESSION","TERM","VALUE","CONSTANT","VARIABLE"};
 	if(t == NULL)
 	{
 		return;
 	}
 	printf("Item: %d", t -> item);
-	printf(" nodeIdentifier: %d\n", t -> nodeIdentifier);
+	printf(" nodeIdentifier: %s\n",arr[(t -> nodeIdentifier)]);
 	print_tree(t -> first);
 	print_tree(t -> second);
 	print_tree(t -> third);	
