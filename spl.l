@@ -10,6 +10,7 @@
 /* Declare Symbol Table Type and Array as imported types */
 
 #include <string.h>
+
 extern SYMTABNODEPTR symTab[SYMTABSIZE];
 extern int currentSymTabSize;
 int installId(char *);
@@ -18,7 +19,7 @@ int installId(char *);
 delim					[ \t\n]
 ws						{delim}+
 character				[A-Za-z]
-character_constant		\'{character}\'
+character_constant			\'{character}\'
 identifier				{character}({character}|{digit})*
 digit					[0-9]
 number      			{digit}+
@@ -94,26 +95,21 @@ OR						RETURN(keyword, OR);
 "'"						RETURN(quote, QUOTE); 
 
 {identifier}			{
-							yylval.iVal = installId(yytext);
-							RETURN(identifier, IDENTIFIER);
-						}
+					yylval.iVal = installId(yytext);
+					RETURN(identifier, IDENTIFIER);
+				}
 
-{character_constant}	{
-							yylval.iVal = installId(yytext);
-							RETURN(character_constant, CHARACTER_CONSTANT);
-						}
+{character_constant}		{
+					yylval.iVal = installId(yytext);
+					RETURN(character_constant, CHARACTER_CONSTANT);
+				}
 						
 {number_constant}		{
-							k = atoi(yytext);
-							RETURN(number_constant, NUMBER_CONSTANT);
-						};
+					yylval.iVal = installId(yytext);
+					RETURN(number_constant, NUMBER_CONSTANT);
+				};
 
 %%						
-
-/* Here is the code for the library of symbol table routines 
- code for a simple symbol table, which is an array of pointers to
-   structs, each of which contains an identifier.
-*/
 
 
 SYMTABNODEPTR newSymTabNode()

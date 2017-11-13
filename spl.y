@@ -1,49 +1,10 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include "genCode.c"
 
 int yylex(void);
 void yyerror(char *);
-
-#define NOTHING -1
-#define SYMTABSIZE     50
-#define IDLENGTH       15
-#define NOTHING        -1
-#define INDENTOFFSET    2
-
-enum ParseTreeNodeType
-{
-	PROGRAM,BLOCK,DECLARATION_BLOCK,VAR_TYPE,STATEMENT_LIST,STATEMENT,ASSIGNMENT_STATEMENT,IF_STATEMENT,WHILE_STATEMENT,DO_STATEMENT,FOR_STATEMENT,WRITE_STATEMENT,READ_STATEMENT,OUTPUT_LIST,CONDITIONAL,COMPARATOR,EXPRESSION,TERM,VALUE,CONSTANT,VARIABLE
-};
-
-
-
-
-/*Define a tree node as an item, variable and 3 other tree nodes */
-struct treeNode
-{
-	int item;
-	int nodeIdentifier;
-	struct treeNode *first;
-	struct treeNode *second;
-	struct treeNode *third;
-};
-
-typedef struct treeNode TREE_NODE;
-typedef TREE_NODE *TERNARY_TREE;
-TERNARY_TREE create_node(int,int,TERNARY_TREE,TERNARY_TREE,TERNARY_TREE);
-void print_tree(TERNARY_TREE);
-
-struct symTabNode {
-    char identifier[IDLENGTH];
-};
-
-typedef  struct symTabNode SYMTABNODE;
-typedef  SYMTABNODE        *SYMTABNODEPTR;
-
-SYMTABNODEPTR  symTab[SYMTABSIZE]; 
-
-int currentSymTabSize = 0;
 
 %}
 
@@ -66,6 +27,7 @@ program			 		: variable COLON block ENDP variable FULL_STOP
 						TERNARY_TREE ParseTree;
 						ParseTree = create_node(NOTHING,PROGRAM,$1,$3,$5);
 						print_tree(ParseTree);
+						gen(ParseTree);
 					}
 					;
 block			 		: DECLARATIONS declaration_block CODE statement_list
@@ -92,15 +54,15 @@ declaration_block			: variable COMMA declaration_block
 					;
 type					: CHARACTER
 						{
-							$$ = create_node(NOTHING,VAR_TYPE,NULL,NULL,NULL);
+							$$ = create_node(NOTHING,VAR_TYPE_CHAR,NULL,NULL,NULL);
 						}
 						| INTEGER
 						{
-							$$ = create_node(NOTHING,VAR_TYPE,NULL,NULL,NULL);
+							$$ = create_node(NOTHING,VAR_TYPE_INT,NULL,NULL,NULL);
 						}						
 						| REAL
-												{
-							$$ = create_node(NOTHING,VAR_TYPE,NULL,NULL,NULL);
+						{
+							$$ = create_node(NOTHING,VAR_TYPE_REAL,NULL,NULL,NULL);
 						}
 					;
 statement_list				: statement SEMI_COLON statement_list
@@ -199,11 +161,11 @@ conditional				: NOT conditional
 						}
 					| expression comparator expression AND conditional
 						{
-							$$ = create_node(NOTHING,CONDITIONAL,create_node(NOTHING,NOTHING,$1,$2,$3),$5,NULL);
+							$$ = create_node(NOTHING,CONDITIONAL_AND,create_node(NOTHING,CONDITIONAL,$1,$2,$3),$5,NULL);
 						}
 					| expression comparator expression OR conditional
 						{
-							$$ = create_node(NOTHING,CONDITIONAL,create_node(NOTHING,NOTHING,$1,$2,$3),$5,NULL);
+							$$ = create_node(NOTHING,CONDITIONAL_OR,create_node(NOTHING,CONDITIONAL,$1,$2,$3),$5,NULL);
 						}
 					| expression comparator expression
 						{
@@ -212,36 +174,36 @@ conditional				: NOT conditional
 					;
 comparator			 	: EQUAL_TO
  						{
-							$$ = create_node(NOTHING,COMPARATOR,NULL,NULL,NULL);
+							$$ = create_node(NOTHING,ET,NULL,NULL,NULL);
 						}
 						| NOT_EQUAL_TO 
 						{
-							$$ = create_node(NOTHING,COMPARATOR,NULL,NULL,NULL);
+							$$ = create_node(NOTHING,NET,NULL,NULL,NULL);
 						}
 						| LESS_THAN
 						{
-							$$ = create_node(NOTHING,COMPARATOR,NULL,NULL,NULL);
+							$$ = create_node(NOTHING,LT,NULL,NULL,NULL);
 						}
 						| GREATER_THAN
  						{
-							$$ = create_node(NOTHING,COMPARATOR,NULL,NULL,NULL);
+							$$ = create_node(NOTHING,GT,NULL,NULL,NULL);
 						}						
 						| LESS_THAN_OR_EQUAL_TO
  						{
-							$$ = create_node(NOTHING,COMPARATOR,NULL,NULL,NULL);
+							$$ = create_node(NOTHING,LTOET,NULL,NULL,NULL);
 						}						
 						| GREATER_THAN_OR_EQUAL_TO
  						{
-							$$ = create_node(NOTHING,COMPARATOR,NULL,NULL,NULL);
+							$$ = create_node(NOTHING,GTOET,NULL,NULL,NULL);
 						}
 						;
 expression			 	: term PLUS expression
  						{
-							$$ = create_node(NOTHING,EXPRESSION,$1,$3,NULL);
+							$$ = create_node(NOTHING,EXPRESSION_PLUS,$1,$3,NULL);
 						}
 					| term MINUS expression
 					 	{
-							$$ = create_node(NOTHING,EXPRESSION,$1,$3,NULL);
+							$$ = create_node(NOTHING,EXPRESSION_MINUS,$1,$3,NULL);
 						}
 					| term
 					 	{
@@ -250,11 +212,11 @@ expression			 	: term PLUS expression
 					;
 term			 		: value MULTIPLY term
  						{
-							$$ = create_node(NOTHING,TERM,$1,$3,NULL);
+							$$ = create_node(NOTHING,TERM_MUL,$1,$3,NULL);
 						}
 					| value DIVIDE term
 					 	{
-							$$ = create_node(NOTHING,TERM,$1,$3,NULL);
+							$$ = create_node(NOTHING,TERM_DIV,$1,$3,NULL);
 						}
 					| value
 					 	{
@@ -276,15 +238,15 @@ value			 		: variable
 					;
 constant			 	: CHARACTER_CONSTANT
 					{
-						$$ = create_node($1,CONSTANT,NULL,NULL,NULL);
+						$$ = create_node($1,CHAR_CONSTANT,NULL,NULL,NULL);
 					}
 					| MINUS NUMBER_CONSTANT
 					 	{
-							$$ = create_node($2,CONSTANT,NULL,NULL,NULL);
+							$$ = create_node($2,NEG_CONSTANT,NULL,NULL,NULL);
 						}
 					| NUMBER_CONSTANT
 					 	{
-							$$ = create_node($1,CONSTANT,NULL,NULL,NULL);
+							$$ = create_node($1,NUM_CONSTANT,NULL,NULL,NULL);
 						}
 					;
 
@@ -311,17 +273,15 @@ TERNARY_TREE create_node(int ival, int case_identifier, TERNARY_TREE p1, TERNARY
 
 void print_tree(TERNARY_TREE t)
 {
-	char arr[25][40] = {"PROGRAM","BLOCK","DECLARATION_BLOCK","VAR_TYPE","STATEMENT_LIST","STATEMENT","ASSIGNMENT_STATEMENT","IF_STATEMENT","WHILE_STATEMENT","DO_STATEMENT","FOR_STATEMENT","WRITE_STATEMENT","READ_STATEMENT","OUTPUT_LIST","CONDITIONAL","COMPARATOR","EXPRESSION","TERM","VALUE","CONSTANT","VARIABLE"};
 	if(t == NULL)
 	{
 		return;
 	}
-	printf("Item: %d", t -> item);
-	printf(" nodeIdentifier: %s\n",arr[(t -> nodeIdentifier)]);
+	printf("Item: %s", symTab[t -> item] -> identifier);
+	printf(" nodeIdentifier: %s\n",node[(t -> nodeIdentifier)]);
 	print_tree(t -> first);
 	print_tree(t -> second);
 	print_tree(t -> third);	
 }
-
 
 #include "lex.yy.c"
