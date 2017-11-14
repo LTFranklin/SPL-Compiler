@@ -1,18 +1,22 @@
 #include "declarations.c"
 #include<stdio.h>
+#include<string.h>
 
-int cPos,iPos,rPos = 0;
-char* cArr[5][1];
-char* iArr[5][1];
-char* rArr[5][1];
+int cPos,iPos,rPos,indent = 0;
+char *cArr[5];
+char *iArr[5];
+char *rArr[5];
 char typeID;
 
 void gen(TERNARY_TREE);
 void genDBlock(TERNARY_TREE);
+void printDecs();
 void genState(TERNARY_TREE);
+char getVarType(char*);
 void genComp(TERNARY_TREE);
-void getVar(TERNARY_TREE);
+char* getVar(TERNARY_TREE);
 void getCon(TERNARY_TREE);
+void addIndent(int);
 
 //start
 void gen(TERNARY_TREE t)
@@ -26,13 +30,21 @@ void gen(TERNARY_TREE t)
 			//gen(t -> first);
 			//print the parameters
 			printf("void main()\n{\n");
+			indent++;
 			//get the rest of the program
 			gen(t -> second);
+			indent--;
 			//print the closing bracket
 			printf("}\n");
 			return;
 		//if its a block, statement list or output list
 		case(BLOCK):
+			gen(t -> first);
+			if(t -> second != NULL)
+			{
+				printDecs();
+				gen(t -> second);
+			}
 		case(STATEMENT_LIST):
 		case(OUTPUT_LIST):
 			//pass the branches through
@@ -40,30 +52,18 @@ void gen(TERNARY_TREE t)
 			gen(t -> second);
 			return;
 		case(DECLARATION_BLOCK):
-			//FUCKING COMMA FUCKS #@*&#%#!*
 			gen(t -> third);
 			gen(t -> second);
-			//gen(t -> first);
-			if(node[(t -> second) -> nodeIdentifier] != "DECLARATION_BLOCK")
-			{
-				if(t -> third == NULL)
-				{
-					gen(t -> first);
-				printf(",\n");
-					return;
-				}
-			}
-			gen(t -> first);
-			printf(";\n");
+			genDBlock(t -> first);
 			return;
 		case(VAR_TYPE_CHAR):
-			printf("char ");
+			typeID = 'c';
 			return;
 		case(VAR_TYPE_INT):
-			printf("int ");
+			typeID = 'i';
 			return;
 		case(VAR_TYPE_REAL):
-			printf("real ");
+			typeID = 'r';
 			return;
 		case(STATEMENT):
 			genState(t -> first);
@@ -120,37 +120,91 @@ void gen(TERNARY_TREE t)
 			gen(t -> first);
 			return;
 		case(VARIABLE):
-			getVar(t);
+			printf("%s",getVar(t));
 			return;
 		case(CHAR_CONSTANT):
 			getCon(t);
 			return;
 		case(NUM_CONSTANT):
-			getVar(t);
+			printf("%s",getVar(t));
 			return;
 		case(NEG_CONSTANT):
-			printf("-");
-			getVar(t);
+			printf("-%s",getVar(t));
 			return;
 	}
 }
 
-void genDecBlock(TERNARY_TREE t)
+void genDBlock(TERNARY_TREE t)
 {
 	if(typeID == 'c')
 	{
-		cArr[cPos] = symTab[t -> item] -> identifier;
+		cArr[cPos]=(symTab[t -> item] -> identifier);
 		cPos++;
 	}
 	if(typeID == 'i')
-	{
-		iArr[iPos] = symTab[t -> item] -> identifier;
+	{	
+		iArr[iPos]=(symTab[t -> item] -> identifier);
 		iPos++;
 	}
 	if(typeID == 'r')
 	{
-		rArr[rPos] = symTab[t -> item] -> identifier;
+		rArr[rPos]=(symTab[t -> item] -> identifier);
 		rPos++;
+	}
+	return;
+}
+
+void printDecs()
+{
+	if(iPos != 0)
+	{
+		printf("int ");
+		for(int i = 0; i < iPos; i++)
+		{
+			printf("%s",iArr[i]);
+			if(i != iPos - 1)
+			{
+				printf(",");
+			}
+			else
+			{
+				printf(";\n");
+			}
+		}
+	}
+
+	if(cPos != 0)
+	{
+		printf("char ");
+		for(int i = 0; i < cPos; i++)
+		{
+			printf("%s",cArr[i]);
+			if(i != cPos - 1)
+			{
+				printf(",");
+			}
+			else
+			{
+				printf(";\n");
+			}
+		}
+	}
+
+	if(rPos != 0)
+	{
+		printf("real ");
+		for(int i = 0; i < rPos; i++)
+		{
+			printf("%s",rArr[i]);
+			if(i != rPos - 1)
+			{
+				printf(",");
+			}
+			else
+			{
+				printf(";\n");
+			}
+		}
 	}
 }
 
@@ -253,12 +307,50 @@ void genState(TERNARY_TREE t)
 		//if its a read statement
 		case(READ_STATEMENT):
 			//print the starting line -- needs to be able to find the variable type to substitute in for the %s
-			printf("scanf(\"[placeholder]\", &");
+			printf("scanf(\"");
+			if(getVarType(getVar(t -> first)) == 'c')
+			{
+				printf("%%c");
+			}
+			if(getVarType(getVar(t -> first)) == 'i')
+                        {
+                        	printf("%%d");
+                        }
+			if(getVarType(getVar(t -> first)) == 'r')
+			{
+				printf("%%f");
+			}
+			printf("\", &");
 			//find the var
 			gen(t -> first);
 			//close the statement
 			printf(");\n");
 			return;
+	}
+}
+
+char getVarType(char* c)
+{
+	for(int i = 0; i < cPos; i++)
+	{
+		if(cArr[i] == c)
+		{
+			return 'c';
+		}
+	}
+	for(int i = 0; i < iPos; i++)
+	{
+		if(iArr[i] == c)
+		{
+			return 'i';
+		}
+	}
+	for(int i = 0; i < rPos; i++)
+	{
+		if(rArr[i] == c)
+		{
+			return 'r';
+		}
 	}
 }
 
@@ -295,7 +387,15 @@ void getCon(TERNARY_TREE t)
 	printf("%c",str[1]);
 }
 
-void getVar(TERNARY_TREE t)
+char* getVar(TERNARY_TREE t)
 {
-	printf("%s",symTab[t -> item] -> identifier);
+	return symTab[t -> item] -> identifier;
+}
+
+void addIndent(int i)
+{
+	for(int j = i; j < 0; j--)
+	{
+		printf("\t");
+	}
 }
