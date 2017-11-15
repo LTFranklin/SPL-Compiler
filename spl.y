@@ -26,7 +26,7 @@ program			 		: variable COLON block ENDP variable FULL_STOP
 					{
 						TERNARY_TREE ParseTree;
 						ParseTree = create_node(NOTHING,PROGRAM,$1,$3,$5);
-						print_tree(ParseTree);
+					//	print_tree(ParseTree);
 						gen(ParseTree);
 					}
 					;

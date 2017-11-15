@@ -16,7 +16,7 @@ char getVarType(char*);
 void genComp(TERNARY_TREE);
 char* getVar(TERNARY_TREE);
 void getCon(TERNARY_TREE);
-void addIndent(int);
+void addIndent();
 
 //start
 void gen(TERNARY_TREE t)
@@ -26,56 +26,79 @@ void gen(TERNARY_TREE t)
 	{
 		//if its a program
 		case(PROGRAM):
+			printf("#include <stdio.h>\n");
 			//get the method name
 			//gen(t -> first);
 			//print the parameters
 			printf("void main()\n{\n");
+			//add an indent
 			indent++;
 			//get the rest of the program
 			gen(t -> second);
+			//decrease the indent
 			indent--;
 			//print the closing bracket
 			printf("}\n");
 			return;
 		//if its a block, statement list or output list
 		case(BLOCK):
+			//pass the first branch
 			gen(t -> first);
+			//if the second branch isnt null
 			if(t -> second != NULL)
 			{
+				//the first branch contained the declarations so print them out
 				printDecs();
+				//and continue with the tree
 				gen(t -> second);
 			}
+			return;
 		case(STATEMENT_LIST):
+			gen(t -> first);
+			gen(t -> second);
+			return;
 		case(OUTPUT_LIST):
 			//pass the branches through
 			gen(t -> first);
 			gen(t -> second);
 			return;
 		case(DECLARATION_BLOCK):
+			//go through the tree backwards because the type is stored last
 			gen(t -> third);
+			//get the data type
 			gen(t -> second);
+			//then store all the varables
 			genDBlock(t -> first);
 			return;
 		case(VAR_TYPE_CHAR):
+			//flag the type as char
 			typeID = 'c';
 			return;
 		case(VAR_TYPE_INT):
+			//flag the type as int
 			typeID = 'i';
 			return;
 		case(VAR_TYPE_REAL):
+			//flag the type as real
 			typeID = 'r';
 			return;
 		case(STATEMENT):
+			//pass it into the statement generation
 			genState(t -> first);
 			return;
 		case(CONDITIONAL):
+			//if te second branch is null
 			if((t -> second) == NULL)
 			{
+				//the statement is a not statement so add the !
 				printf("!(");
+				//go back through the tree
 				gen(t -> first);
+				//close the statement
 				printf(")");
 				return;
 			}
+			//handle the conditional
 			gen(t -> first);
 			genComp(t -> second);
 			gen(t -> third);
@@ -134,6 +157,7 @@ void gen(TERNARY_TREE t)
 	}
 }
 
+//method that places the varaiable in the respective arrays
 void genDBlock(TERNARY_TREE t)
 {
 	if(typeID == 'c')
@@ -154,20 +178,29 @@ void genDBlock(TERNARY_TREE t)
 	return;
 }
 
+//print out the declarations blocks
 void printDecs()
 {
+	//if there is items in the array
 	if(iPos != 0)
 	{
+		addIndent();
+		//print the data type
 		printf("int ");
+		//go through the array
 		for(int i = 0; i < iPos; i++)
 		{
+			//print out the variable
 			printf("%s",iArr[i]);
+			//if its not the end of the array
 			if(i != iPos - 1)
 			{
+				//print a comma
 				printf(",");
 			}
 			else
 			{
+				//else print a semi-colon
 				printf(";\n");
 			}
 		}
@@ -175,6 +208,7 @@ void printDecs()
 
 	if(cPos != 0)
 	{
+		addIndent();
 		printf("char ");
 		for(int i = 0; i < cPos; i++)
 		{
@@ -192,7 +226,8 @@ void printDecs()
 
 	if(rPos != 0)
 	{
-		printf("real ");
+		addIndent();
+		printf("float ");
 		for(int i = 0; i < rPos; i++)
 		{
 			printf("%s",rArr[i]);
@@ -206,6 +241,7 @@ void printDecs()
 			}
 		}
 	}
+	printf("\n");
 }
 
 //handles all the various statements
@@ -215,6 +251,7 @@ void genState(TERNARY_TREE t)
 	{
 		//if its an assignment
 		case(ASSIGNMENT_STATEMENT):
+			addIndent();
 			//get the variable name
 			gen(t -> second);
 			//print the equals
@@ -226,58 +263,102 @@ void genState(TERNARY_TREE t)
 			return;
 		//if its an if statement
 		case(IF_STATEMENT):
+			addIndent();
 			//print out the start of the statement
 			printf("if(");
 			//print out the conditional
 			gen(t -> first);
 			//close the condition and print out the statement list
-			printf(")\n{\n");
+			printf(")\n");
+			addIndent();
+			indent++;
+			printf("{\n");
 			gen(t -> second);
+			indent--;
+			addIndent();
 			printf("}\n");
 			//check for an else and print it out if needed
 			if(t -> third != NULL)
 			{
-				printf("else\n{\n");
+				addIndent();
+				printf("else\n");
+				addIndent();
+				indent++;
+				printf("{\n");
 				gen(t -> third);
+				indent--;
+				addIndent();
 				printf("}\n");
 			}
 			return;
 		case(WHILE_STATEMENT):
+			//print out the while statement
+			addIndent();
 			printf("while(");
+			//go through the conditional
 			gen(t -> first);
-			printf(")\n{\n");
+			//close the statement
+			printf(")\n");
+			addIndent();
+			indent++;
+			printf("{\n");
+			//go through the statement list
 			gen(t -> second);
+			indent--;
+			addIndent();
 			printf("}\n");
 			return;
 		case(DO_STATEMENT):
-			printf("do\n{\n");
+			//print the do
+			addIndent();
+			printf("do\n");
+			addIndent();
+			indent++;
+			printf("{\n");
+			//go through the statements
 			gen(t -> first);
+			indent--;
+			addIndent();
+			//close the do while and print the the conditional
 			printf("} while(");
 			gen(t -> second);
 			printf(")\n");
 			return;
 		case(FOR_STATEMENT):
+			//print the for
+			addIndent();
 			printf("for(");
+			//get the variable name
 			gen((t -> first) -> first);
 			printf(" = ");
+			// get the value to assign to it
 			gen((t -> first) -> second);
 			printf(", ");
+			//get the value again
 			gen((t -> first) -> first);
 			printf(" != ");
+			//get the value it needs to reach
 			gen(t -> second);
 			printf(", ");
+			//set the incriment
 			gen((t -> first) -> first);
 			printf(" = ");
 			gen((t -> first) -> first);
 			printf(" + ");
 			gen((t -> first) -> third);
-			printf(")\n{\n");
+			printf(")\n");
+			addIndent();
+			indent++;
+			printf("{\n");
 			gen(t -> third);
+			indent--;
+			addIndent();
 			printf("}\n");
 			return;
 		//if its  a write statement
 		case(WRITE_STATEMENT):
 			//print out the start of the function
+			addIndent();
 			printf("printf(");
 			//if the first branch isnt empty
 			if((t -> first) != NULL)
@@ -290,6 +371,7 @@ void genState(TERNARY_TREE t)
 					gen(t -> first);
 					printf("\"");
 				}
+				//else its a variable
 				else
 				{
 					//pass it it throught the generator without any speech marks
@@ -307,6 +389,7 @@ void genState(TERNARY_TREE t)
 		//if its a read statement
 		case(READ_STATEMENT):
 			//print the starting line -- needs to be able to find the variable type to substitute in for the %s
+			addIndent();
 			printf("scanf(\"");
 			if(getVarType(getVar(t -> first)) == 'c')
 			{
@@ -392,9 +475,9 @@ char* getVar(TERNARY_TREE t)
 	return symTab[t -> item] -> identifier;
 }
 
-void addIndent(int i)
+void addIndent()
 {
-	for(int j = i; j < 0; j--)
+	for(int j = indent; j > 0; j--)
 	{
 		printf("\t");
 	}
