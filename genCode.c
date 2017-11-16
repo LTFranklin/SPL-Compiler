@@ -13,6 +13,7 @@ void genDBlock(TERNARY_TREE);
 void printDecs();
 void genState(TERNARY_TREE);
 char getVarType(char*);
+void printVarType(TERNARY_TREE);
 void genComp(TERNARY_TREE);
 char* getVar(TERNARY_TREE);
 void getCon(TERNARY_TREE);
@@ -359,50 +360,38 @@ void genState(TERNARY_TREE t)
 		case(WRITE_STATEMENT):
 			//print out the start of the function
 			addIndent();
-			printf("printf(");
 			//if the first branch isnt empty
 			if((t -> first) != NULL)
 			{
 				//if the third node from this (value) is constant
 				if(node[((((t -> first) -> first) -> first) -> nodeIdentifier)] == "CHAR_CONSTANT")
 				{
-					//print speech marks around the constants
-					printf("\"");
+					printf("printf(\"");
 					gen(t -> first);
-					printf("\"");
+					printf("\");\n");
 				}
 				//else its a variable
 				else
 				{
-					//pass it it throught the generator without any speech marks
+					printf("printf(\"");
+					printVarType(t -> first -> first);	
+					printf("\", ");
 					gen(t -> first);
+					printf(");\n");
 				}
 			}
 			//else its a newline
 			else
 			{
-				printf("\"\\n\"");
+				printf("printf(\"\\n\");\n");
 			}
-			//close off the statement
-			printf(");\n");
 			return;
 		//if its a read statement
 		case(READ_STATEMENT):
-			//print the starting line -- needs to be able to find the variable type to substitute in for the %s
 			addIndent();
-			printf("scanf(\"");
-			if(getVarType(getVar(t -> first)) == 'c')
-			{
-				printf("%%c");
-			}
-			if(getVarType(getVar(t -> first)) == 'i')
-                        {
-                        	printf("%%d");
-                        }
-			if(getVarType(getVar(t -> first)) == 'r')
-			{
-				printf("%%f");
-			}
+			//print the starting line -- needs to be able to find the variable type to substitute in for the %s
+			printf("scanf(\" ");
+			printVarType(t);
 			printf("\", &");
 			//find the var
 			gen(t -> first);
@@ -434,6 +423,22 @@ char getVarType(char* c)
 		{
 			return 'r';
 		}
+	}
+}
+
+void printVarType(TERNARY_TREE t)
+{
+	if(getVarType(getVar(t -> first)) == 'c')
+	{
+		printf("%%c");
+	}
+	if(getVarType(getVar(t -> first)) == 'i')
+	{
+		printf("%%d");
+	}
+	if(getVarType(getVar(t -> first)) == 'r')
+	{
+		printf("%%f");
 	}
 }
 
