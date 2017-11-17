@@ -323,7 +323,7 @@ void genState(TERNARY_TREE t)
 			//close the do while and print the the conditional
 			printf("} while(");
 			gen(t -> second);
-			printf(")\n");
+			printf(");\n");
 			return;
 		case(FOR_STATEMENT):
 			//print the for
@@ -334,13 +334,13 @@ void genState(TERNARY_TREE t)
 			printf(" = ");
 			// get the value to assign to it
 			gen((t -> first) -> second);
-			printf(", ");
+			printf("; ");
 			//get the value again
 			gen((t -> first) -> first);
 			printf(" != ");
 			//get the value it needs to reach
 			gen(t -> second);
-			printf(", ");
+			printf("; ");
 			//set the incriment
 			gen((t -> first) -> first);
 			printf(" = ");
@@ -364,7 +364,7 @@ void genState(TERNARY_TREE t)
 			if((t -> first) != NULL)
 			{
 				//if the third node from this (value) is constant
-				if(node[((((t -> first) -> first) -> first) -> nodeIdentifier)] == "CHAR_CONSTANT")
+				if(node[((((t -> first) -> first) -> first) -> nodeIdentifier)] != "VARIABLE")
 				{
 					printf("printf(\"");
 					gen(t -> first);
