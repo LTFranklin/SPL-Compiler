@@ -1,4 +1,14 @@
 %{
+#ifdef DEBUG
+#define ACT(x) print_tree(x)
+#else
+#ifdef YYDEBUG
+#define ACT(x)
+#else
+#define ACT(x) gen(x)
+#endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "genCode.c"
@@ -21,13 +31,11 @@ void yyerror(char *);
 
 %token					IDENTIFIER FULL_STOP ENDP DECLARATIONS CODE COMMA OF TYPE SEMI_COLON CHARACTER INTEGER REAL ASSIGNMENT IF THEN ELSE ENDIF WHILE DO ENDWHILE FOR IS BY TO ENDFOR WRITE OPEN CLOSE NEWLINE READ NOT AND OR EQUAL_TO NOT_EQUAL_TO LESS_THAN GREATER_THAN LESS_THAN_OR_EQUAL_TO GREATER_THAN_OR_EQUAL_TO PLUS MINUS MULTIPLY DIVIDE QUOTE NUMBER_CONSTANT CHARACTER_CONSTANT COLON ENDDO
 %%
-
 program			 		: variable COLON block ENDP variable FULL_STOP
 					{
 						TERNARY_TREE ParseTree;
 						ParseTree = create_node(NOTHING,PROGRAM,$1,$3,$5);
-					//	print_tree(ParseTree);
-						gen(ParseTree);
+						ACT(ParseTree);
 					}
 					;
 block			 		: DECLARATIONS declaration_block CODE statement_list

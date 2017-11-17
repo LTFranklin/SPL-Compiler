@@ -1,8 +1,11 @@
 %{
 #ifdef PRINT
+#include "declarations.c"
 #define RETURN(type,token) printf(#type " : " #token "\n")
+#define SETYYLVAL(x)
 #else
 #define	RETURN(type,token) return(token)
+#define SETYYLVAL(x) yylval.iVal = x
 #endif
 
 
@@ -95,17 +98,17 @@ OR						RETURN(keyword, OR);
 "'"						RETURN(quote, QUOTE); 
 
 {identifier}			{
-					yylval.iVal = installId(yytext);
+					SETYYLVAL(installId(yytext));
 					RETURN(identifier, IDENTIFIER);
 				}
 
 {character_constant}		{
-					yylval.iVal = installId(yytext);
+					SETYYLVAL(installId(yytext));
 					RETURN(character_constant, CHARACTER_CONSTANT);
 				}
 						
 {number_constant}		{
-					yylval.iVal = installId(yytext);
+					SETYYLVAL(installId(yytext));
 					RETURN(number_constant, NUMBER_CONSTANT);
 				};
 
