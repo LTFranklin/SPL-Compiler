@@ -2,6 +2,10 @@
 #include<stdio.h>
 #include<string.h>
 
+#define oneDeep first->first
+#define twoDeep first->first->first
+#define threeDeep first->first->first->first
+
 int cPos,iPos,rPos,indent = 0;
 char *cArr[5];
 char *iArr[5];
@@ -118,11 +122,20 @@ void gen(TERNARY_TREE t)
 			gen(t -> first);
 			return;
 		case(EXPRESSION_PLUS):
+			/*makes sure the program isnt trying to use aritmatic on chars -> add error msg?*/
+			if(node[t -> twoDeep -> nodeIdentifier] == "CHAR_CONSTANT")
+			{
+				exit(1);
+			}
 			gen(t -> first);
 			printf(" + ");
 			gen(t -> second);;
 			return;
 		case(EXPRESSION_MINUS):
+			if(node[t -> twoDeep -> nodeIdentifier] == "CHAR_CONSTANT")
+			{
+				exit(1);
+			}
 			gen(t -> first);
 			printf(" - ");
 			gen(t -> second);
@@ -131,11 +144,19 @@ void gen(TERNARY_TREE t)
 			gen(t -> first);
 			return;
 		case(TERM_MUL):
+			if(node[t -> oneDeep -> nodeIdentifier] == "CHAR_CONSTANT")
+			{
+				exit(1);
+			}
 			gen(t -> first);
 			printf(" * ");
 			gen(t -> second);
 			return;
 		case(TERM_DIV):
+			if(node[t -> oneDeep -> nodeIdentifier] == "CHAR_CONSTANT")
+			{
+				exit(1);
+			}
 			gen(t -> first);
 			printf(" / ");
 			gen(t -> second);
@@ -261,7 +282,16 @@ void genState(TERNARY_TREE t)
 			/*print the equals*/
 			printf(" = ");
 			/*do the rest*/
-			gen(t -> first);
+			if(node[t->first->first->first->first-> nodeIdentifier] == "CHAR_CONSTANT")
+			{
+				printf("'");
+				gen(t->first);
+				printf("'");
+			}
+			else
+			{
+				gen(t -> first);
+			}
 			/*close the statement*/
 			printf(";\n");
 			return;
@@ -333,14 +363,14 @@ void genState(TERNARY_TREE t)
 			addIndent();
 			printf("for(");
 			/*get the variable name*/
-			gen((t -> first) -> first);
+			gen(t->oneDeep);
 			printf(" = ");
 			/* get the value to assign to it*/
 			gen((t -> first) -> second);
 			printf("; ");
 			/*get the value again*/
-			gen((t -> first) -> first);
-			if(node[(((((t -> first) -> third)-> first) -> first) -> first)-> nodeIdentifier] == "NUM_CONSTANT")
+			gen(t->oneDeep);
+			if(node[(((t -> first) -> third)-> twoDeep)-> nodeIdentifier] == "NUM_CONSTANT")
 			{
 				printf(" <= ");
 			}
@@ -352,9 +382,9 @@ void genState(TERNARY_TREE t)
 			gen(t -> second);
 			printf("; ");
 			/*set the incriment*/
-			gen((t -> first) -> first);
+			gen(t -> oneDeep);
 			printf(" = ");
-			gen((t -> first) -> first);
+			gen(t -> oneDeep);
 			printf(" + ");
 			gen(((t -> first) -> third)-> first);
 			printf(")\n");
@@ -374,10 +404,10 @@ void genState(TERNARY_TREE t)
 			if((t -> first) != NULL)
 			{
 				/*if the third node from this (value) is constant*/
-				if(node[((((t -> first) -> first) -> first) -> nodeIdentifier)] == "VARIABLE")
+				if(node[(t -> twoDeep -> nodeIdentifier)] == "VARIABLE")
 				{
 					printf("printf(\"");
-					printVarType(t -> first -> first);	
+					printVarType(t -> oneDeep);	
 					printf("\", ");
 					gen(t -> first);
 					printf(");\n");
@@ -387,7 +417,7 @@ void genState(TERNARY_TREE t)
 				/*else its a variable*/
 				else
 				{
-					if(node[((((t -> first) -> first) -> first) -> nodeIdentifier)] == "CHAR_CONSTANT")
+					if(node[(t -> twoDeep -> nodeIdentifier)] == "CHAR_CONSTANT")
 					{
 						printf("printf(\"");
 						gen(t -> first);
