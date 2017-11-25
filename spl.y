@@ -231,17 +231,17 @@ term			 		: value MULTIPLY term
 							$$ = create_node(NOTHING,TERM,$1,NULL,NULL);
 						}
 					;
-value			 		: variable
+value			 		: OPEN expression CLOSE
+						{
+							$$ = create_node(NOTHING,BRA_VALUE,$2,NULL,NULL);
+						}
+					| variable
  						{
 							$$ = create_node(NOTHING,VALUE,$1,NULL,NULL);
 						}
 					| constant
-					{
-						$$ = create_node(NOTHING,VALUE,$1,NULL,NULL);
-					}
-					| OPEN expression CLOSE
-					 	{
-							$$ = create_node(NOTHING,VALUE,$2,NULL,NULL);
+						{
+							$$ = create_node(NOTHING,VALUE,$1,NULL,NULL);
 						}
 					;
 constant			 	: CHARACTER_CONSTANT

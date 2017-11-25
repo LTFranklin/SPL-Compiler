@@ -1,6 +1,7 @@
 #include "declarations.c"
 #include<stdio.h>
 #include<string.h>
+#include <stdbool.h>
 
 #define oneDeep first->first
 #define twoDeep first->first->first
@@ -10,7 +11,9 @@ int cPos,iPos,rPos,indent = 0;
 char *cArr[5];
 char *iArr[5];
 char *rArr[5];
+char *progName;
 char typeID;
+bool declaring = true;
 
 void gen(TERNARY_TREE);
 void genDBlock(TERNARY_TREE);
@@ -19,6 +22,8 @@ void genState(TERNARY_TREE);
 char getVarType(char*);
 void printVarType(TERNARY_TREE);
 void genComp(TERNARY_TREE);
+void confirmVar(char*);
+void checkNum(TERNARY_TREE);
 char* getVar(TERNARY_TREE);
 void getCon(TERNARY_TREE);
 void addIndent();
@@ -31,9 +36,14 @@ void gen(TERNARY_TREE t)
 	{
 		/*if its a program*/
 		case(PROGRAM):
+			/*make sure the program is closed correctly*/
+			if(getVar(t -> first) != getVar(t -> third))
+			{
+				exit(1);
+			}
 			printf("#include <stdio.h>\n");
 			/*get the method name*/
-			/*gen(t -> first);*/
+			progName = getVar(t -> first);
 			/*print the parameters*/
 			printf("void main()\n{\n");
 			/*add an indent*/
@@ -54,6 +64,8 @@ void gen(TERNARY_TREE t)
 			{
 				/*the first branch contained the declarations so print them out*/
 				printDecs();
+				/*flag they're done*/
+				declaring = false;
 				/*and continue with the tree*/
 				gen(t -> second);
 			}
@@ -122,20 +134,14 @@ void gen(TERNARY_TREE t)
 			gen(t -> first);
 			return;
 		case(EXPRESSION_PLUS):
-			/*makes sure the program isnt trying to use aritmatic on chars -> add error msg?*/
-			if(node[t -> twoDeep -> nodeIdentifier] == "CHAR_CONSTANT")
-			{
-				exit(1);
-			}
+			/*makes sure the program isnt trying to use arithmatic on chars -> add error msg?*/
+			checkNum(t -> twoDeep);
 			gen(t -> first);
 			printf(" + ");
 			gen(t -> second);;
 			return;
 		case(EXPRESSION_MINUS):
-			if(node[t -> twoDeep -> nodeIdentifier] == "CHAR_CONSTANT")
-			{
-				exit(1);
-			}
+			checkNum(t -> twoDeep);
 			gen(t -> first);
 			printf(" - ");
 			gen(t -> second);
@@ -144,25 +150,27 @@ void gen(TERNARY_TREE t)
 			gen(t -> first);
 			return;
 		case(TERM_MUL):
-			if(node[t -> oneDeep -> nodeIdentifier] == "CHAR_CONSTANT")
-			{
-				exit(1);
-			}
+			checkNum(t -> oneDeep);
 			gen(t -> first);
 			printf(" * ");
 			gen(t -> second);
 			return;
 		case(TERM_DIV):
-			if(node[t -> oneDeep -> nodeIdentifier] == "CHAR_CONSTANT")
-			{
-				exit(1);
-			}
+			checkNum(t -> oneDeep);
 			gen(t -> first);
 			printf(" / ");
 			gen(t -> second);
 			return;
 		case(VALUE):
 			gen(t -> first);
+			return;
+		case(BRA_VALUE):
+			if(getVar(t -> threeDeep) != NULL)
+			{
+				printf("(");
+				gen(t -> first);
+				printf(")");
+			}
 			return;
 		case(VARIABLE):
 			printf("%s",getVar(t));
@@ -184,17 +192,17 @@ void genDBlock(TERNARY_TREE t)
 {
 	if(typeID == 'c')
 	{
-		cArr[cPos]=(symTab[t -> item] -> identifier);
+		cArr[cPos] = getVar(t);
 		cPos++;
 	}
 	if(typeID == 'i')
 	{	
-		iArr[iPos]=(symTab[t -> item] -> identifier);
+		iArr[iPos] = getVar(t);
 		iPos++;
 	}
 	if(typeID == 'r')
 	{
-		rArr[rPos]=(symTab[t -> item] -> identifier);
+		rArr[rPos] = getVar(t);
 		rPos++;
 	}
 	return;
@@ -281,8 +289,8 @@ void genState(TERNARY_TREE t)
 			gen(t -> second);
 			/*print the equals*/
 			printf(" = ");
-			/*do the rest*/
-			if(node[t->first->first->first->first-> nodeIdentifier] == "CHAR_CONSTANT")
+			/*print out the value*/
+			if(node[t -> threeDeep -> nodeIdentifier] == "CHAR_CONSTANT")
 			{
 				printf("'");
 				gen(t->first);
@@ -362,10 +370,16 @@ void genState(TERNARY_TREE t)
 			/*print the for*/
 			addIndent();
 			printf("for(");
+			/*make sure that the variable isnt a int*/
+			if(getVarType(getVar(t -> oneDeep)) == 'c')
+			{
+				exit(1);
+			}
 			/*get the variable name*/
 			gen(t->oneDeep);
 			printf(" = ");
 			/* get the value to assign to it*/
+			checkNum((t -> first) -> second);
 			gen((t -> first) -> second);
 			printf("; ");
 			/*get the value again*/
@@ -463,7 +477,7 @@ char getVarType(char* c)
 		}
 		i++;
 	}
-	i =0;
+	i = 0;
 	while(i < iPos)
 	{
 		if(iArr[i] == c)
@@ -472,7 +486,7 @@ char getVarType(char* c)
 		}
 		i++;
 	}
-	i=0;
+	i = 0;
 	while(i < rPos)
 	{
 		if(rArr[i] == c)
@@ -481,6 +495,37 @@ char getVarType(char* c)
 		}
 		i++;
 	}
+	/*if it doesnt exist return x*/
+	return 'x';
+}
+
+void confirmVar(char* var)
+{
+	/*exit if the variable doesnt exist*/
+	if(getVarType(var) == 'x'&& declaring == false)
+	{
+		exit(1);
+	}
+	/*exit if the variable being declared already exists*/
+	if(getVarType(var) != 'x' && declaring == true)
+	{
+		exit(1);
+	}
+	/*exit if the var name is the same as the programs*/
+	if(var == progName)
+	{
+		exit(1);
+	}
+	return;
+}
+
+void checkNum(TERNARY_TREE t)
+{
+	if(node[t -> nodeIdentifier] == "CHAR_CONSTANT")
+	{
+		exit(1);
+	}
+	return;
 }
 
 void printVarType(TERNARY_TREE t)
@@ -530,11 +575,19 @@ void getCon(TERNARY_TREE t)
 	/*as its saved as 'x' it should only take the middle element*/
 	char* str = (symTab[t -> item] -> identifier);
 	printf("%c",str[1]);
+	return;
 }
 
 char* getVar(TERNARY_TREE t)
 {
-	return symTab[t -> item] -> identifier;
+	char* x = symTab[t -> item] -> identifier;
+	if(node[t -> nodeIdentifier] == "VARIABLE")
+	{
+		confirmVar(x);
+	}
+
+	/*printf("%s",node[t -> nodeIdentifier]);*/
+	return x;
 }
 
 void addIndent()
