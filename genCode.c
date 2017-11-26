@@ -41,6 +41,7 @@ void gen(TERNARY_TREE t)
 			/*make sure the program is closed correctly*/
 			if(getVar(t -> first) != getVar(t -> third))
 			{
+				fprintf(stderr,"\nError: Program not closed correctly\n");
 				exit(1);
 			}
 			printf("#include <stdio.h>\n");
@@ -384,6 +385,7 @@ void genState(TERNARY_TREE t)
 			/*make sure that the variable isnt a int*/
 			if(getVarType(getVar(t -> oneDeep)) == 'c')
 			{
+				fprintf(stderr,"\nError: Using a character as an integer\n");
 				exit(1);
 			}
 			/*get the variable name*/
@@ -472,7 +474,7 @@ void writeOutput(TERNARY_TREE t)
 		}
 		else
 		{
-			if(node[t -> first -> first -> nodeIdentifier] == "FLOAT_CONSTANT")
+			if(node[t -> oneDeep -> nodeIdentifier] == "FLOAT_CONSTANT")
 			{
 				printf("printf(\"%%f\",");
 				gen(t -> first);
@@ -526,6 +528,7 @@ void confirmVar(char* var)
 	/*exit if the variable doesnt exist*/
 	if(getVarType(var) == 'x'&& declaring == false)
 	{
+		fprintf(stderr, "\nError: Variable %s doesn't exist\n", var);
 		exit(1);
 	}
 }
@@ -535,13 +538,16 @@ void confirmVarDec(char* var)
 	/*exit if the variable being declared already exists*/
 	if(getVarType(var) != 'x' && declaring == true)
 	{
+		fprintf(stderr, "\nError: Varible %s has already been declared\n",var);
 		exit(1);
 	}
 	/*exit if the var name is the same as the programs*/
 	if(var == progName)
 	{
+		fprintf(stderr,"\nError: Variable %s shares an identifier with the program\n",var);
 		exit(1);
 	}
+	/*if the variable name is the same as a reserved keyword, add an x on the end to avoid the error*/
 	if(declaring == true)
 	{
 		int i=0;
@@ -562,6 +568,7 @@ void checkNum(TERNARY_TREE t)
 {
 	if(node[t -> nodeIdentifier] == "CHAR_CONSTANT")
 	{
+		fprintf(stderr,"\nError: Attempting to use a character as a number\n");
 		exit(1);
 	}
 	return;
