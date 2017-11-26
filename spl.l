@@ -26,7 +26,8 @@ character_constant			\'{character}\'
 identifier				{character}({character}|{digit})*
 digit					[0-9]
 number      			{digit}+
-number_constant			{number}([.]?{number})?
+number_constant			{number}
+real_constant			{number}([.]?{number})?
 anything				.
 
 %%
@@ -109,8 +110,12 @@ OR						RETURN(keyword, OR);
 						
 {number_constant}		{
 					SETYYLVAL(installId(yytext));
-					RETURN(number_constant, NUMBER_CONSTANT);
-				};
+					RETURN(int_constant, INT_CONSTANT);
+				}
+{real_constant}			{
+					SETYYLVAL(installId(yytext));
+					RETURN(real_constant, REAL_CONSTANT);
+				}
 
 %%						
 

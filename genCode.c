@@ -19,6 +19,7 @@ void gen(TERNARY_TREE);
 void genDBlock(TERNARY_TREE);
 void printDecs();
 void genState(TERNARY_TREE);
+void writeOutput(TERNARY_TREE);
 char getVarType(char*);
 void printVarType(TERNARY_TREE);
 void genComp(TERNARY_TREE);
@@ -75,8 +76,9 @@ void gen(TERNARY_TREE t)
 			gen(t -> second);
 			return;
 		case(OUTPUT_LIST):
+			addIndent();
 			/*pass the branches through*/
-			gen(t -> first);
+			writeOutput(t -> first);
 			gen(t -> second);
 			return;
 		case(DECLARATION_BLOCK):
@@ -165,7 +167,7 @@ void gen(TERNARY_TREE t)
 			gen(t -> first);
 			return;
 		case(BRA_VALUE):
-			if(getVar(t -> threeDeep) != NULL)
+			if(node[(t -> threeDeep) -> nodeIdentifier] != NULL)
 			{
 				printf("(");
 				gen(t -> first);
@@ -179,10 +181,17 @@ void gen(TERNARY_TREE t)
 			getCon(t);
 			return;
 		case(NUM_CONSTANT):
-			printf("%s",getVar(t));
+			gen(t -> first);
 			return;
 		case(NEG_CONSTANT):
-			printf("-%s",getVar(t));
+			printf("-");
+			gen(t -> first);
+			return;
+		case(INTEGER_CONSTANT):
+			printf("%s",getVar(t));
+			return;
+		case(FLOAT_CONSTANT):
+			printf("%s",getVar(t));
 			return;
 	}
 }
@@ -412,42 +421,15 @@ void genState(TERNARY_TREE t)
 			return;
 		/*if its  a write statement*/
 		case(WRITE_STATEMENT):
-			/*print out the start of the function*/
-			addIndent();
-			/*if the first branch isnt empty*/
-			if((t -> first) != NULL)
+			/*if the first branch isnt null its an output list*/
+			if(t -> first != NULL)
 			{
-				/*if the third node from this (value) is constant*/
-				if(node[(t -> twoDeep -> nodeIdentifier)] == "VARIABLE")
-				{
-					printf("printf(\"");
-					printVarType(t -> oneDeep);	
-					printf("\", ");
-					gen(t -> first);
-					printf(");\n");
-					
-
-				}
-				/*else its a variable*/
-				else
-				{
-					if(node[(t -> twoDeep -> nodeIdentifier)] == "CHAR_CONSTANT")
-					{
-						printf("printf(\"");
-						gen(t -> first);
-						printf("\");\n");
-					}
-					else
-					{
-						printf("printf(\"%%d\",");
-						gen(t -> first);
-						printf(");\n");
-					}
-				}
+				gen(t->first);
 			}
-			/*else its a newline*/
+			/*else its  a newline*/
 			else
 			{
+				addIndent();
 				printf("printf(\"\\n\");\n");
 			}
 			return;
@@ -463,6 +445,44 @@ void genState(TERNARY_TREE t)
 			/*close the statement*/
 			printf(");\n");
 			return;
+	}
+}
+
+void writeOutput(TERNARY_TREE t)
+{	
+	/*if the value is a variable*/
+        if(node[(t -> first -> nodeIdentifier)] == "VARIABLE")
+        {
+        	printf("printf(\"");
+        	printVarType(t);	
+        	printf("\", ");
+        	gen(t -> first);
+        	printf(");\n");
+        }
+        /*else its a constant*/
+        else
+        {
+        	if(node[(t -> first -> nodeIdentifier)] == "CHAR_CONSTANT")
+		{
+			printf("printf(\"");
+			gen(t -> first);
+			printf("\");\n");
+		}
+		else
+		{
+			if(node[t -> first -> first -> nodeIdentifier] == "FLOAT_CONSTANT")
+			{
+				printf("printf(\"%%f\",");
+				gen(t -> first);
+				printf(");\n");
+			}
+			else
+			{
+				printf("printf(\"%%d\",");
+				gen(t -> first);
+				printf(");\n");
+			}
+		}
 	}
 }
 

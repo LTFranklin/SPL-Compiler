@@ -25,11 +25,11 @@ void yyerror(char *);
 }
 
 
-%type<iVal> CHARACTER_CONSTANT NUMBER_CONSTANT IDENTIFIER
+%type<iVal> CHARACTER_CONSTANT INT_CONSTANT REAL_CONSTANT IDENTIFIER
 
-%type<tVal>				program block declaration_block type statement_list statement assignment_statement if_statement while_statement do_statement for_statement write_statement read_statement output_list conditional comparator expression term value constant variable
+%type<tVal>				program block declaration_block type statement_list statement assignment_statement if_statement while_statement do_statement for_statement write_statement read_statement output_list conditional comparator expression term value constant num_constant variable
 
-%token					IDENTIFIER FULL_STOP ENDP DECLARATIONS CODE COMMA OF TYPE SEMI_COLON CHARACTER INTEGER REAL ASSIGNMENT IF THEN ELSE ENDIF WHILE DO ENDWHILE FOR IS BY TO ENDFOR WRITE OPEN CLOSE NEWLINE READ NOT AND OR EQUAL_TO NOT_EQUAL_TO LESS_THAN GREATER_THAN LESS_THAN_OR_EQUAL_TO GREATER_THAN_OR_EQUAL_TO PLUS MINUS MULTIPLY DIVIDE QUOTE NUMBER_CONSTANT CHARACTER_CONSTANT COLON ENDDO
+%token					IDENTIFIER FULL_STOP ENDP DECLARATIONS CODE COMMA OF TYPE SEMI_COLON CHARACTER INTEGER REAL ASSIGNMENT IF THEN ELSE ENDIF WHILE DO ENDWHILE FOR IS BY TO ENDFOR WRITE OPEN CLOSE NEWLINE READ NOT AND OR EQUAL_TO NOT_EQUAL_TO LESS_THAN GREATER_THAN LESS_THAN_OR_EQUAL_TO GREATER_THAN_OR_EQUAL_TO PLUS MINUS MULTIPLY DIVIDE QUOTE INT_CONSTANT REAL_CONSTANT CHARACTER_CONSTANT COLON ENDDO
 %%
 program			 		: variable COLON block ENDP variable FULL_STOP
 					{
@@ -248,16 +248,24 @@ constant			 	: CHARACTER_CONSTANT
 					{
 						$$ = create_node($1,CHAR_CONSTANT,NULL,NULL,NULL);
 					}
-					| MINUS NUMBER_CONSTANT
+					| MINUS num_constant
 					 	{
-							$$ = create_node($2,NEG_CONSTANT,NULL,NULL,NULL);
+							$$ = create_node(NOTHING,NEG_CONSTANT,$2,NULL,NULL);
 						}
-					| NUMBER_CONSTANT
+					| num_constant
 					 	{
-							$$ = create_node($1,NUM_CONSTANT,NULL,NULL,NULL);
+							$$ = create_node(NOTHING,NUM_CONSTANT,$1,NULL,NULL);
 						}
 					;
-
+num_constant				: INT_CONSTANT
+						{
+							$$ = create_node($1,INTEGER_CONSTANT,NULL,NULL,NULL);
+						}
+					| REAL_CONSTANT
+						{
+							$$ = create_node($1,FLOAT_CONSTANT,NULL,NULL,NULL);
+						}
+					;
 variable				: IDENTIFIER
  						{
 							$$ = create_node($1,VARIABLE,NULL,NULL,NULL);
