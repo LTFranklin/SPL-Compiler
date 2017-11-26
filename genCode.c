@@ -23,6 +23,7 @@ void writeOutput(TERNARY_TREE);
 char getVarType(char*);
 void printVarType(TERNARY_TREE);
 void genComp(TERNARY_TREE);
+void confirmVarDec(char*);
 void confirmVar(char*);
 void checkNum(TERNARY_TREE);
 char* getVar(TERNARY_TREE);
@@ -199,6 +200,7 @@ void gen(TERNARY_TREE t)
 /*method that places the varaiable in the respective arrays*/
 void genDBlock(TERNARY_TREE t)
 {
+	confirmVarDec(getVar(t));
 	if(typeID == 'c')
 	{
 		cArr[cPos] = getVar(t);
@@ -526,6 +528,10 @@ void confirmVar(char* var)
 	{
 		exit(1);
 	}
+}
+
+void confirmVarDec(char* var)
+{
 	/*exit if the variable being declared already exists*/
 	if(getVarType(var) != 'x' && declaring == true)
 	{
@@ -535,6 +541,19 @@ void confirmVar(char* var)
 	if(var == progName)
 	{
 		exit(1);
+	}
+	if(declaring == true)
+	{
+		int i=0;
+		while(i<30)
+		{
+			if(strcmp(reserved[i],var) == 0)
+			{
+				var[strlen(var)] = 'x';
+				return;
+			}
+			++i;
+		}
 	}
 	return;
 }
