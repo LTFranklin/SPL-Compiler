@@ -28,6 +28,8 @@ void generate_code(TERNARY_TREE);
 
 struct symTabNode {
     char identifier[IDLENGTH];
+    char type;
+    int initialised;
 };
 
 typedef  struct symTabNode SYMTABNODE;

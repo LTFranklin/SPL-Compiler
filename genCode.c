@@ -8,9 +8,9 @@
 #define threeDeep first->first->first->first
 
 int cPos,iPos,rPos,indent = 0;
-char *cArr[5];
-char *iArr[5];
-char *rArr[5];
+char *cArr[10];
+char *iArr[10];
+char *rArr[10];
 char *progName;
 char typeID;
 bool declaring = true;
@@ -204,21 +204,25 @@ void genDBlock(TERNARY_TREE t)
 	confirmVarDec(getVar(t));
 	if(typeID == 'c')
 	{
+		symTab[t -> item] -> type = 'c';
 		cArr[cPos] = getVar(t);
 		cPos++;
 	}
 	if(typeID == 'i')
 	{	
+		symTab[t -> item] -> type = 'i';
 		iArr[iPos] = getVar(t);
 		iPos++;
 	}
 	if(typeID == 'r')
 	{
+		symTab[t -> item] -> type = 'r';
 		rArr[rPos] = getVar(t);
 		rPos++;
 	}
 	return;
 }
+
 
 /*print out the declarations blocks*/
 void printDecs()
@@ -299,6 +303,8 @@ void genState(TERNARY_TREE t)
 			addIndent();
 			/*get the variable name*/
 			gen(t -> second);
+			/*flag it as intialised*/
+			symTab[t -> second -> item] -> initialised = 1;
 			/*print the equals*/
 			printf(" = ");
 			/*print out the value*/
@@ -390,6 +396,8 @@ void genState(TERNARY_TREE t)
 			}
 			/*get the variable name*/
 			gen(t->oneDeep);
+			/*flag the var as initialised*/
+			symTab[t -> oneDeep -> item] -> initialised = 1;
 			printf(" = ");
 			/* get the value to assign to it*/
 			checkNum((t -> first) -> second);
@@ -440,12 +448,14 @@ void genState(TERNARY_TREE t)
 		/*if its a read statement*/
 		case(READ_STATEMENT):
 			addIndent();
-			/*print the starting line -- needs to be able to find the variable type to substitute in for the %s*/
+			/*print the starting line*/
 			printf("scanf(\" ");
 			printVarType(t);
 			printf("\", &");
 			/*find the var*/
 			gen(t -> first);
+			/*flag the var as initialised*/
+			symTab[t -> first -> item] -> initialised = 1;
 			/*close the statement*/
 			printf(");\n");
 			return;
@@ -457,6 +467,12 @@ void writeOutput(TERNARY_TREE t)
 	/*if the value is a variable*/
         if(node[(t -> first -> nodeIdentifier)] == "VARIABLE")
         {
+		/*output an error if it isnt initialised*/
+		if(symTab[t -> first -> item] -> initialised != 1)
+		{
+			fprintf(stderr,"Error: Variable %s is not initialised",symTab[t -> first -> item] -> identifier);
+			exit(1);
+		}
         	printf("printf(\"");
         	printVarType(t);	
         	printf("\", ");
