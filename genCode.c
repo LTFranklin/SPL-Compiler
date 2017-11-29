@@ -7,7 +7,8 @@
 #define twoDeep first->first->first
 #define threeDeep first->first->first->first
 
-int cPos,iPos,rPos,indent = 0;
+int cPos,iPos,rPos,indent,oPos = 0;
+char *output[1000];
 char *cArr[10];
 char *iArr[10];
 char *rArr[10];
@@ -29,6 +30,11 @@ void checkNum(TERNARY_TREE);
 char* getVar(TERNARY_TREE);
 void getCon(TERNARY_TREE);
 void addIndent();
+void createOutput(char*);
+void printOutput();
+void optimise();
+void varIniCheck(int);
+void iniCleanUp(int);
 
 /*start*/
 void gen(TERNARY_TREE t)
@@ -44,11 +50,11 @@ void gen(TERNARY_TREE t)
 				fprintf(stderr,"\nError: Program not closed correctly\n");
 				exit(1);
 			}
-			printf("#include <stdio.h>\n");
+			createOutput("#include <stdio.h>\n");
 			/*get the method name*/
 			progName = getVar(t -> first);
 			/*print the parameters*/
-			printf("void main()\n{\n");
+			createOutput("void main()\n{\n");
 			/*add an indent*/
 			indent++;
 			/*get the rest of the program*/
@@ -56,7 +62,9 @@ void gen(TERNARY_TREE t)
 			/*decrease the indent*/
 			indent--;
 			/*print the closing bracket*/
-			printf("}\n");
+			createOutput("}\n");
+			optimise();
+			printOutput();
 			return;
 		/*if its a block, statement list or output list*/
 		case(BLOCK):
@@ -112,11 +120,11 @@ void gen(TERNARY_TREE t)
 			if((t -> second) == NULL)
 			{
 				/*the statement is a not statement so add the ! */
-				printf("!(");
+				createOutput("!(");
 				/*go back through the tree*/
 				gen(t -> first);
 				/*close the statement*/
-				printf(")");
+				createOutput(")");
 				return;
 			}
 			/*handle the conditional*/
@@ -126,12 +134,12 @@ void gen(TERNARY_TREE t)
 			return;
 		case(CONDITIONAL_AND):
 			gen(t -> first);
-			printf(" && ");
+			createOutput(" && ");
 			gen(t -> second);
 			return;
 		case(CONDITIONAL_OR):
 			gen(t -> first);
-			printf(" || ");
+			createOutput(" || ");
 			gen(t -> second);
 			return;
 		case(EXPRESSION):
@@ -141,13 +149,13 @@ void gen(TERNARY_TREE t)
 			/*makes sure the program isnt trying to use arithmatic on chars -> add error msg?*/
 			checkNum(t -> twoDeep);
 			gen(t -> first);
-			printf(" + ");
+			createOutput(" + ");
 			gen(t -> second);;
 			return;
 		case(EXPRESSION_MINUS):
 			checkNum(t -> twoDeep);
 			gen(t -> first);
-			printf(" - ");
+			createOutput(" - ");
 			gen(t -> second);
 			return;
 		case(TERM):
@@ -156,13 +164,13 @@ void gen(TERNARY_TREE t)
 		case(TERM_MUL):
 			checkNum(t -> oneDeep);
 			gen(t -> first);
-			printf(" * ");
+			createOutput(" * ");
 			gen(t -> second);
 			return;
 		case(TERM_DIV):
 			checkNum(t -> oneDeep);
 			gen(t -> first);
-			printf(" / ");
+			createOutput(" / ");
 			gen(t -> second);
 			return;
 		case(VALUE):
@@ -171,13 +179,13 @@ void gen(TERNARY_TREE t)
 		case(BRA_VALUE):
 			if(node[(t -> threeDeep) -> nodeIdentifier] != NULL)
 			{
-				printf("(");
+				createOutput("(");
 				gen(t -> first);
-				printf(")");
+				createOutput(")");
 			}
 			return;
 		case(VARIABLE):
-			printf("%s",getVar(t));
+			createOutput(getVar(t));
 			return;
 		case(CHAR_CONSTANT):
 			getCon(t);
@@ -186,14 +194,14 @@ void gen(TERNARY_TREE t)
 			gen(t -> first);
 			return;
 		case(NEG_CONSTANT):
-			printf("-");
+			createOutput("-");
 			gen(t -> first);
 			return;
 		case(INTEGER_CONSTANT):
-			printf("%s",getVar(t));
+			createOutput(getVar(t));
 			return;
 		case(FLOAT_CONSTANT):
-			printf("%s",getVar(t));
+			createOutput(getVar(t));
 			return;
 	}
 }
@@ -232,23 +240,23 @@ void printDecs()
 	{
 		addIndent();
 		/*print the data type*/
-		printf("int ");
+		createOutput("int ");
 		/*go through the array*/
 		int i;
 		for(i = 0; i < iPos; i++)
 		{
 			/*print out the variable*/
-			printf("%s",iArr[i]);
+			createOutput(iArr[i]);
 			/*if its not the end of the array*/
 			if(i != iPos - 1)
 			{
 				/*print a comma*/
-				printf(",");
+				createOutput(",");
 			}
 			else
 			{
 				/*else print a semi-colon*/
-				printf(";\n");
+				createOutput(";\n");
 			}
 		}
 	}
@@ -256,18 +264,18 @@ void printDecs()
 	if(cPos != 0)
 	{
 		addIndent();
-		printf("char ");
+		createOutput("char ");
 		int i;
 		for(i = 0; i < cPos; i++)
 		{
-			printf("%s",cArr[i]);
+			createOutput(cArr[i]);
 			if(i != cPos - 1)
 			{
-				printf(",");
+				createOutput(",");
 			}
 			else
 			{
-				printf(";\n");
+				createOutput(";\n");
 			}
 		}
 	}
@@ -275,22 +283,22 @@ void printDecs()
 	if(rPos != 0)
 	{
 		addIndent();
-		printf("float ");
+		createOutput("float ");
 		int i;
 		for(i = 0; i < rPos; i++)
 		{
-			printf("%s",rArr[i]);
+			createOutput(rArr[i]);
 			if(i != rPos - 1)
 			{
-				printf(",");
+				createOutput(",");
 			}
 			else
 			{
-				printf(";\n");
+				createOutput(";\n");
 			}
 		}
 	}
-	printf("\n");
+	createOutput("\n");
 }
 
 /*handles all the various statements*/
@@ -306,88 +314,95 @@ void genState(TERNARY_TREE t)
 			/*flag it as intialised*/
 			symTab[t -> second -> item] -> initialised = 1;
 			/*print the equals*/
-			printf(" = ");
+			createOutput(" = ");
 			/*print out the value*/
 			if(node[t -> threeDeep -> nodeIdentifier] == "CHAR_CONSTANT")
 			{
-				printf("'");
+				createOutput("'");
 				gen(t->first);
-				printf("'");
+				createOutput("'");
 			}
 			else
 			{
+				if(node[t -> threeDeep -> nodeIdentifier] == "VARIABLE")
+				{
+					if(symTab[t -> threeDeep -> item] -> initialised != 1)
+					{
+						fprintf(stderr,"Error: Assigning non-initialised variable %s",symTab[t -> threeDeep -> first -> item] -> identifier);
+					}
+				}
 				gen(t -> first);
 			}
 			/*close the statement*/
-			printf(";\n");
+			createOutput(";\n");
 			return;
 		/*if its an if statement*/
 		case(IF_STATEMENT):
 			addIndent();
 			/*print out the start of the statement*/
-			printf("if(");
+			createOutput("if(");
 			/*print out the conditional*/
 			gen(t -> first);
 			/*close the condition and print out the statement list*/
-			printf(")\n");
+			createOutput(")\n");
 			addIndent();
 			indent++;
-			printf("{\n");
+			createOutput("{\n");
 			gen(t -> second);
 			indent--;
 			addIndent();
-			printf("}\n");
+			createOutput("}\n");
 			/*check for an else and print it out if needed*/
 			if(t -> third != NULL)
 			{
 				addIndent();
-				printf("else\n");
+				createOutput("else\n");
 				addIndent();
 				indent++;
-				printf("{\n");
+				createOutput("{\n");
 				gen(t -> third);
 				indent--;
 				addIndent();
-				printf("}\n");
+				createOutput("}\n");
 			}
 			return;
 		case(WHILE_STATEMENT):
 			/*print out the while statement*/
 			addIndent();
-			printf("while(");
+			createOutput("while(");
 			/*go through the conditional*/
 			gen(t -> first);
 			/*close the statement*/
-			printf(")\n");
+			createOutput(")\n");
 			addIndent();
 			indent++;
-			printf("{\n");
+			createOutput("{\n");
 			/*go through the statement list*/
 			gen(t -> second);
 			indent--;
 			addIndent();
-			printf("}\n");
+			createOutput("}\n");
 			return;
 		case(DO_STATEMENT):
 			/*print the do*/
 			addIndent();
-			printf("do\n");
+			createOutput("do\n");
 			addIndent();
 			indent++;
-			printf("{\n");
+			createOutput("{\n");
 			/*go through the statements*/
 			gen(t -> first);
 			indent--;
 			addIndent();
 			/*close the do while and print the the conditional*/
-			printf("} while(");
+			createOutput("} while(");
 			gen(t -> second);
-			printf(");\n");
+			createOutput(");\n");
 			return;
 		case(FOR_STATEMENT):
 			/*print the for*/
 			addIndent();
-			printf("for(");
+			createOutput("for(");
 			/*make sure that the variable isnt a int*/
 			if(getVarType(getVar(t -> oneDeep)) == 'c')
 			{
@@ -398,38 +413,38 @@ void genState(TERNARY_TREE t)
 			gen(t->oneDeep);
 			/*flag the var as initialised*/
 			symTab[t -> oneDeep -> item] -> initialised = 1;
-			printf(" = ");
+			createOutput(" = ");
 			/* get the value to assign to it*/
 			checkNum((t -> first) -> second);
 			gen((t -> first) -> second);
-			printf("; ");
+			createOutput("; ");
 			/*get the value again*/
 			gen(t->oneDeep);
 			if(node[(((t -> first) -> third)-> twoDeep)-> nodeIdentifier] == "NUM_CONSTANT")
 			{
-				printf(" <= ");
+				createOutput(" <= ");
 			}
 			else
 			{
-				printf(" >= ");
+				createOutput(" >= ");
 			}
 			/*get the value it needs to reach*/
 			gen(t -> second);
-			printf("; ");
+			createOutput("; ");
 			/*set the incriment*/
 			gen(t -> oneDeep);
-			printf(" = ");
+			createOutput(" = ");
 			gen(t -> oneDeep);
-			printf(" + ");
+			createOutput(" + ");
 			gen(((t -> first) -> third)-> first);
-			printf(")\n");
+			createOutput(")\n");
 			addIndent();
 			indent++;
-			printf("{\n");
+			createOutput("{\n");
 			gen(t -> third);
 			indent--;
 			addIndent();
-			printf("}\n");
+			createOutput("}\n");
 			return;
 		/*if its  a write statement*/
 		case(WRITE_STATEMENT):
@@ -442,22 +457,22 @@ void genState(TERNARY_TREE t)
 			else
 			{
 				addIndent();
-				printf("printf(\"\\n\");\n");
+				createOutput("printf(\"\\n\");\n");
 			}
 			return;
 		/*if its a read statement*/
 		case(READ_STATEMENT):
 			addIndent();
 			/*print the starting line*/
-			printf("scanf(\" ");
+			createOutput("scanf(\" ");
 			printVarType(t);
-			printf("\", &");
+			createOutput("\", &");
 			/*find the var*/
 			gen(t -> first);
 			/*flag the var as initialised*/
 			symTab[t -> first -> item] -> initialised = 1;
 			/*close the statement*/
-			printf(");\n");
+			createOutput(");\n");
 			return;
 	}
 }
@@ -473,34 +488,34 @@ void writeOutput(TERNARY_TREE t)
 			fprintf(stderr,"Error: Variable %s is not initialised",symTab[t -> first -> item] -> identifier);
 			exit(1);
 		}
-        	printf("printf(\"");
+        	createOutput("printf(\"");
         	printVarType(t);	
-        	printf("\", ");
+        	createOutput("\", ");
         	gen(t -> first);
-        	printf(");\n");
+        	createOutput(");\n");
         }
         /*else its a constant*/
         else
         {
         	if(node[(t -> first -> nodeIdentifier)] == "CHAR_CONSTANT")
 		{
-			printf("printf(\"");
+			createOutput("printf(\"");
 			gen(t -> first);
-			printf("\");\n");
+			createOutput("\");\n");
 		}
 		else
 		{
 			if(node[t -> oneDeep -> nodeIdentifier] == "FLOAT_CONSTANT")
 			{
-				printf("printf(\"%%f\",");
+				createOutput("printf(\"%f\",");
 				gen(t -> first);
-				printf(");\n");
+				createOutput(");\n");
 			}
 			else
 			{
-				printf("printf(\"%%d\",");
+				createOutput("printf(\"%d\",");
 				gen(t -> first);
-				printf(");\n");
+				createOutput(");\n");
 			}
 		}
 	}
@@ -594,15 +609,15 @@ void printVarType(TERNARY_TREE t)
 {
 	if(getVarType(getVar(t -> first)) == 'c')
 	{
-		printf("%%c");
+		createOutput("%c");
 	}
 	if(getVarType(getVar(t -> first)) == 'i')
 	{
-		printf("%%d");
+		createOutput("%d");
 	}
 	if(getVarType(getVar(t -> first)) == 'r')
 	{
-		printf("%%f");
+		createOutput("%f");
 	}
 }
 
@@ -611,22 +626,22 @@ void genComp(TERNARY_TREE t)
 	switch(t -> nodeIdentifier)
 	{
 		case(ET):
-			printf(" == ");
+			createOutput(" == ");
 			return;
 		case(NET):
-			printf(" != ");
+			createOutput(" != ");
 			return;
 		case(LT):
-			printf(" < ");
+			createOutput(" < ");
 			return;
 		case(GT):
-			printf(" > ");
+			createOutput(" > ");
 			return;
 		case(LTOET):
-			printf(" <= ");
+			createOutput(" <= ");
 			return;
 		case(GTOET):
-			printf(" >= ");
+			createOutput(" >= ");
 			return;
 	}
 }
@@ -636,7 +651,10 @@ void getCon(TERNARY_TREE t)
 {
 	/*as its saved as 'x' it should only take the middle element*/
 	char* str = (symTab[t -> item] -> identifier);
-	printf("%c",str[1]);
+	char* nStr = malloc(2);
+	nStr[0] = str[1];
+	nStr[1] = '\0';
+	createOutput(nStr);
 	return;
 }
 
@@ -657,7 +675,96 @@ void addIndent()
 	int j = indent;
 	while(j > 0)
 	{
-		printf("\t");
+		createOutput("\t");
 		j--;
+	}
+}
+
+void createOutput(char* c)
+{
+	output[oPos] = c;
+	oPos++;
+	return;
+}
+
+void printOutput()
+{
+	int i;
+	for(i = 0;i < oPos;i++)
+	{
+		printf("%s",output[i]);
+	}
+	return;
+}
+
+void optimise()
+{
+	int i;
+	for(i=0;i < oPos; i++)
+	{
+		if(!strcmp(output[i],"int ") || !strcmp(output[i],"char ") || !strcmp(output[i],"float "))
+		{
+			varIniCheck(i+1);
+			iniCleanUp(i);
+		}
+	}
+
+}
+
+void varIniCheck(int pos)
+{
+	/*if the next value is a semi colon the type's decs are done*/
+	if(!strcmp(output[pos],";\n"))
+	{
+		return;
+	}
+	else
+	{
+		/*if its not a comma*/
+		if(strcmp(output[pos],","))
+		{
+			int i;
+			/*find the value in the symbol table*/
+			for (int i = 0; i < currentSymTabSize-1; i++)
+			{
+				if(!strcmp(symTab[i] -> identifier,output[pos]) && symTab[i] -> initialised != 1)
+				{
+					output[pos] = "";
+					if(!strcmp(output[pos-1],","))
+					{
+						output[pos-1] = "";
+					}
+				}
+			}
+		}
+		varIniCheck(pos+1);
+	}
+}
+
+void iniCleanUp(int pos)
+{
+	int flag = 0;
+	int i = pos+1;
+	/*while a var's decs are being made*/
+	while(strcmp(output[i],";\n"))
+	{
+		/*if there's a var flag it as okay*/
+		if(strcmp(output[i],""))
+		{
+			flag = 1;
+		}
+		i++;
+	}
+	/*if there are no var being declared of that type anymore remove the type,indent and the semicolon*/
+	if(flag == 0)
+	{
+		output[pos-1] = "";
+		output[pos] = "";
+		output[i] = "";
+	}
+	/*clean up any remianing commas*/
+	if(!strcmp(output[i-2],",") && !strcmp(output[i-3],""))
+	{
+		output[i-2] = "";
 	}
 }
